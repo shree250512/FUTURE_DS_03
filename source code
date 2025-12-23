@@ -1,0 +1,93 @@
+Install & Import Libraries
+
+!pip install textblob vaderSentiment seaborn
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from textblob import TextBlob
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+sns.set(style="whitegrid")
+
+Upload Dataset
+
+from google.colab import files
+uploaded = files.upload()
+# Replace file name with your CSV name
+df = pd.read_csv(list(uploaded.keys())[0])
+df.head()
+
+Check Basic Info
+
+df.info()
+df.describe(include='all')
+
+Handle Missing Values
+
+# Remove rows where feedback is missing
+df = df.dropna(subset=['Feedback'])
+# Clean text
+df['Feedback'] = df['Feedback'].str.strip()
+df.head()
+
+Sentiment Analysis (TextBlob + VADER)
+
+df['polarity'] = df['Feedback'].apply(lambda x: TextBlob(x).sentiment.polarity)
+analyzer = SentimentIntensityAnalyzer()
+def get_vader_score(text):
+    return analyzer.polarity_scores(text)['compound']
+df['vader_compound'] = df['Feedback'].apply(get_vader_score)
+
+Classify Sentiment (Positive / Neutral / Negative)
+
+def classify_sentiment(score):
+    if score > 0.05:
+        return "Positive"
+    elif score < -0.05:
+        return "Negative"
+    else:
+        return "Neutral"
+    
+df['Sentiment'] = df['vader_compound'].apply(classify_sentiment)
+df.head()
+
+Sentiment Count Visualization
+
+plt.figure(figsize=(6,4))
+sns.countplot(data=df, x='Sentiment')
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment Type")
+plt.ylabel("Count")
+plt.show()
+
+Word Cloud (Optional)
+
+!pip install wordcloud
+from wordcloud import WordCloud
+all_words = " ".join(df['Feedback'])
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(all_words)
+plt.figure(figsize=(10,5))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis("off")
+plt.show()
+
+Rating vs Sentiment (If Ratings Exist)
+
+if 'Rating' in df.columns:
+    plt.figure(figsize=(6,4))
+    sns.barplot(data=df, x='Rating', y='polarity')
+    plt.title("Rating vs Polarity")
+    plt.show()
+
+Top Positive & Negative Comments
+
+top_positive = df.sort_values(by='vader_compound', ascending=False).head(5)
+top_negative = df.sort_values(by='vader_compound', ascending=True).head(5)
+print("TOP POSITIVE COMMENTS:\n", top_positive['Feedback'])
+print("\nTOP NEGATIVE COMMENTS:\n", top_negative['Feedback'])
+
+Export Final Results
+
+df.to_csv("final_feedback_sentiment_analysis.csv", index=False)
+files.download("final_feedback_sentiment_analysis.csv")
