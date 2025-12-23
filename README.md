@@ -91,4 +91,4 @@ Add more training data for higher accuracy
 
 ➡ Please navigate to Releases → v3.0 and download the video to view the full demonstration.
 
-over view :
+over view :  https://github.com/shree250512/FUTURE_DS_03/blob/main/college%20event%20feedback%20analysis.pdf
